@@ -52,7 +52,7 @@ regd_users.post("/login", (req, res) => {
         data: password,
       },
       "access",
-      { expiresIn: 60*60 }
+      { expiresIn: 60000 }
     );
 
     // Store access token and username in session
@@ -70,20 +70,39 @@ regd_users.post("/login", (req, res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
   const isbn = req.params.isbn;
   const book = books[isbn];
-  if (book){
-    let review = req.body.review;
-    if (review){
-      book["reviews"] = review;	
-      res.status(200).send("Review added successfully");
+
+  // Check if the book exists
+  if (book) {
+    const review = req.body.review;
+
+    // Check if the review is provided
+    if (review) {
+      // Add or replace review based on user authentication
+      if (!book.reviews) {
+        book.reviews = [];  // Initialize reviews array if not present
+      }
+
+      // Assuming user has a unique identifier, e.g., username from req.session.authorization.username
+      const username = req.session.authorization.username;
+
+      // Add or update the user's review
+      const userReviewIndex = book.reviews.findIndex((r) => r.username === username);
+      if (userReviewIndex >= 0) {
+        // Update existing review
+        book.reviews[userReviewIndex].review = review;
+        res.status(200).send("Review updated successfully");
+      } else {
+        // Add new review
+        book.reviews.push({ username, review });
+        res.status(200).send("Review added successfully");
+      }
+    } else {
+      res.status(400).send("Review not provided");
     }
-    book[isbn] = book;
-    res.send(`Friend with the email ${isbn} updated.`);
-  }
-  else{
-    res.status(404).send("Review not provided");
+  } else {
+    res.status(404).send("Book not found");
   }
 });
 

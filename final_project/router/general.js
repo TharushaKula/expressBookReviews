@@ -56,39 +56,63 @@ public_users.get("/isbn/:isbn", async (req, res) => {
 });
 
 // Get book details based on author
-public_users.get("/author/:author", async (req, res) => {
-  try {
-    const author = req.params.author;
-    // Assume filtering books might be an asynchronous operation
-    const booksByAuthor = await books.filter((book) => book.author === author);
+public_users.get("/author/:author", function (req, res) {
+  const author = req.params.author;
+  const booksByAuthor = [];
+
+  // Iterate over the keys of the books object
+  Object.keys(books).forEach((key) => {
+    if (books[key].author === author) {
+      booksByAuthor.push(books[key]);
+    }
+  });
+
+  if (booksByAuthor.length > 0) {
     res.send(booksByAuthor);
-  } catch (error) {
-    res.status(500).json({ message: "Internal Server Error" });
+  } else {
+    res.status(404).json({ message: "No books found for the specified author." });
   }
 });
+
 
 // Get all books based on title
-public_users.get("/title/:title", async (req, res) => {
-  try {
-    const title = req.params.title;
-    // Assume filtering books might be an asynchronous operation
-    const booksByTitle = await books.filter((book) => book.title === title);
+public_users.get("/title/:title", async function (req, res) {
+  const title = req.params.title;
+  const booksByTitle = [];
+
+  // Iterate over the keys of the books object
+  Object.keys(books).forEach((key) => {
+    if (books[key].title === title) {
+      booksByTitle.push(books[key]);
+    }
+  });
+
+  if (booksByTitle.length > 0) {
     res.send(booksByTitle);
-  } catch (error) {
-    res.status(500).json({ message: "Internal Server Error" });
+  } else {
+    res.status(404).json({ message: "No books found with the specified title." });
   }
 });
 
+
 // Get book review
-public_users.get("/review/:isbn", async (req, res) => {
-  try {
-    const isbn = req.params.isbn;
-    // Assume accessing book reviews might be an asynchronous operation
-    const reviews = await books[isbn].reviews;
-    res.send(reviews);
-  } catch (error) {
-    res.status(500).json({ message: "Internal Server Error" });
+public_users.get("/review/:isbn", function (req, res) {
+  const isbn = req.params.isbn;
+
+  // Check if the book with the given ISBN exists
+  if (books[isbn]) {
+    const reviews = books[isbn].reviews;
+
+    // Check if the book has reviews
+    if (reviews) {
+      res.send(reviews);
+    } else {
+      res.status(404).json({ message: "No reviews found for this book." });
+    }
+  } else {
+    res.status(404).json({ message: "Book not found with the specified ISBN." });
   }
 });
+
 
 module.exports.general = public_users;
